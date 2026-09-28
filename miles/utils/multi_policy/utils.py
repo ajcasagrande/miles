@@ -11,7 +11,7 @@ from miles.ray.placement_group import (
 from miles.ray.rollout.rollout_executor import compute_rollout_checkpoint_dir
 from miles.ray.specs.train import compute_trainer_configs
 from miles.ray.train.init_request import TrainerControllerInitRequest
-from miles.utils.args.runtime import AllConfig
+from miles.utils.args.runtime import OrchestratorConfig
 from miles.utils.arguments import validate_async_off_policy_correction
 from miles.utils.multi_policy.checkpoint_state import MultiPolicyCheckpointState
 from miles.utils.tracking_utils.tracking import define_step_key_metric_group
@@ -29,7 +29,7 @@ class TrainerInfo:
 
 
 async def create_trainers(
-    args: AllConfig, *, rollout_executor: BaseWorkerHandle, capability: BackendCapability
+    args: OrchestratorConfig, *, rollout_executor: BaseWorkerHandle, capability: BackendCapability
 ) -> dict[str, TrainerInfo]:
     trainer_configs = compute_trainer_configs(args)
     handles = create_trainer_handles(args, trainer_configs=trainer_configs, capability=capability)
