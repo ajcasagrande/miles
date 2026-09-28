@@ -11,6 +11,7 @@ from miles.utils.args.schema import validate_complete_config
 from miles.utils.pydantic_utils import FrozenStrictBaseModel
 
 CONFIG_JSON_FLAG = "--config-json"
+ORCHESTRATOR_CONFIG_FLAG = "--orchestrator-config"
 
 _INTERPRETER_SHORT_FLAGS_TAKING_A_VALUE = frozenset({"X", "W", "Q"})
 

@@ -9,7 +9,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from miles.utils.args.schema import validate_complete_config
-from miles.utils.workers.serving.worker_config import ServeWorkerConfig
+from miles.utils.external_utils.command_utils.common import ArgvManipulator
+from miles.utils.workers.argv_utils import ORCHESTRATOR_CONFIG_FLAG
+from miles.utils.workers.serving.worker_config import OrchestratorWorkerConfig, ServeWorkerConfig
 
 IPV4_WILDCARD_HOST = "0.0.0.0"
 IPV6_WILDCARD_HOST = "::"
@@ -65,3 +67,9 @@ def parse_own_args(own_argv: list[str]) -> argparse.Namespace:
 
 def parse_serve_worker_config(value: str) -> ServeWorkerConfig:
     return validate_complete_config(config_class=ServeWorkerConfig, payload=json.loads(value))
+
+
+def parse_orchestrator_argv(argv: list[str]) -> OrchestratorWorkerConfig:
+    values = ArgvManipulator.get(argv, ORCHESTRATOR_CONFIG_FLAG)
+    assert len(values) == 1, f"{ORCHESTRATOR_CONFIG_FLAG} must be given exactly once (got {len(values)})"
+    return validate_complete_config(config_class=OrchestratorWorkerConfig, payload=json.loads(values[0]))
