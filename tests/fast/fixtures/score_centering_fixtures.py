@@ -4,7 +4,7 @@ from argparse import Namespace
 
 import numpy as np
 
-from miles.rollout.generate_utils.score_centering import append_rollout_topk
+from miles.rollout.generate_utils.rollout_topk import append_rollout_topk
 from miles.utils.types import Sample
 
 

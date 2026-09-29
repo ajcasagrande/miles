@@ -3,7 +3,7 @@ from typing import Any
 
 import torch
 
-from miles.rollout.generate_utils.score_centering import validate_rollout_topk_sample
+from miles.rollout.generate_utils.rollout_topk import validate_rollout_topk_sample
 from miles.utils import object_store
 from miles.utils.dp_schedule import build_dp_schedule, has_full_schedule_config
 from miles.utils.multi_lora import is_multi_lora_enabled
