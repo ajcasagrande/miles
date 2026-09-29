@@ -5,6 +5,7 @@ import torch
 
 from miles.backends.training_utils.cp_utils import allgather_cp_redistribute, get_logits_and_tokens_offset_with_cp
 from miles.backends.training_utils.loss_hub.math_utils import calculate_log_probs_and_entropy
+from miles.backends.training_utils.loss_hub.score_centering import selected_log_probs_and_entropy
 from miles.backends.training_utils.parallel import get_parallel_state
 from miles.backends.training_utils.sampling_mask import build_local_sampling_mask
 from miles.utils.sampling_mask import RolloutSamplingMask
@@ -257,18 +258,33 @@ def get_log_probs_and_entropy(
                 response_indices,
                 tp_rank=parallel_state.tp.rank,
             )
-        log_prob, entropy = calculate_log_probs_and_entropy(
-            logits_chunk,
-            tokens_chunk,
-            parallel_state.tp.group,
-            with_entropy=with_entropy,
-            entropy_requires_grad=entropy_requires_grad,
-            chunk_size=args.log_probs_chunk_size,
-            true_on_policy=args.true_on_policy_mode,
-            vocab_size=getattr(args, "vocab_size", None),
-            sampling_mask=sampling_mask,
-            temperature=1.0 if args.true_on_policy_mode else args.rollout_temperature,
-        )
+        if getattr(args, "loss_type", None) == "score_centering" and sampling_mask is None:
+            # Reference KL compares these with the score-centering actor score, which
+            # normalizes over the true vocabulary instead of Megatron's padded one.
+            log_prob, entropy = selected_log_probs_and_entropy(
+                logits_chunk,
+                tokens_chunk.unsqueeze(-1),
+                group=parallel_state.tp.group if parallel_state.tp.size > 1 else None,
+                vocab_size=getattr(args, "vocab_size", None),
+                temperature=args.rollout_temperature,
+                chunk_size=args.log_probs_chunk_size,
+                with_entropy=with_entropy,
+            )
+            if not entropy_requires_grad:
+                entropy = entropy.detach()
+        else:
+            log_prob, entropy = calculate_log_probs_and_entropy(
+                logits_chunk,
+                tokens_chunk,
+                parallel_state.tp.group,
+                with_entropy=with_entropy,
+                entropy_requires_grad=entropy_requires_grad,
+                chunk_size=args.log_probs_chunk_size,
+                true_on_policy=args.true_on_policy_mode,
+                vocab_size=getattr(args, "vocab_size", None),
+                sampling_mask=sampling_mask,
+                temperature=1.0 if args.true_on_policy_mode else args.rollout_temperature,
+            )
 
         log_probs_list.append(log_prob.squeeze(-1))
         if with_entropy:
